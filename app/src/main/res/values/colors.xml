@@ -9,4 +9,6 @@
     <color name="white">#fefefe</color>
     <color name="dark_grey">#8c8c8c</color>
     <color name="light_grey">#eff1f3</color>
+    <color name="theme_blue">#3670E5</color>
+    <color name="theme_light_blue">#4B87FF</color>
 </resources>

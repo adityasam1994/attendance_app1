@@ -1,34 +1,34 @@
 {
   "project_info": {
-    "project_number": "204832348551",
-    "firebase_url": "https://unicornattendance-default-rtdb.firebaseio.com",
-    "project_id": "unicornattendance",
-    "storage_bucket": "unicornattendance.appspot.com"
+    "project_number": "1066483670061",
+    "firebase_url": "https://face-attendance-41f8e-default-rtdb.firebaseio.com",
+    "project_id": "face-attendance-41f8e",
+    "storage_bucket": "face-attendance-41f8e.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:204832348551:android:33278a0fedd9cd53b59b22",
+        "mobilesdk_app_id": "1:1066483670061:android:5473fcad4038c3ae356ca4",
         "android_client_info": {
-          "package_name": "com.aditya.unicornattendance"
+          "package_name": "com.aditya.attendance_app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "204832348551-sv64t7cqdt6t7p601rhcp4s04cajnghv.apps.googleusercontent.com",
+          "client_id": "1066483670061-lltgqatq6gdopvf3m0dqqel1gkupabbj.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAC1yk5U6lafgn3abV68vKj2zDAe6wdag0"
+          "current_key": "AIzaSyBbuAteMI-Ow_BJnyHtwtZeJZkOCaCpYeA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "204832348551-sv64t7cqdt6t7p601rhcp4s04cajnghv.apps.googleusercontent.com",
+              "client_id": "1066483670061-lltgqatq6gdopvf3m0dqqel1gkupabbj.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

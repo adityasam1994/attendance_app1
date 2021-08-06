@@ -12,8 +12,8 @@
     <ImageView
         android:id="@+id/logo"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ulogo1"/>
+        android:layout_height="200dp"
+        android:src="@drawable/att_icon"/>
 
     <TextView
         android:id="@+id/locked"
