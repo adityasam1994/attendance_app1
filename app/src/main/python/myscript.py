@@ -1,6 +1,7 @@
 import face_recognition, os
 from os.path import dirname, join
 import pickle
+import numpy as np
 
 def get_base_dir():
     di = dirname(__file__)
@@ -10,6 +11,13 @@ def get_base_dir():
             nm.append(filename)
 
     return nm
+
+def savefile(pobj):
+    di = dirname(__file__)
+    with open(join(di, "mypy.pkl"), "wb") as f:
+        pickle.dump(pobj, f)
+
+    return "done"
 
 def convert(pth):
     myimage = face_recognition.load_image_file(pth)

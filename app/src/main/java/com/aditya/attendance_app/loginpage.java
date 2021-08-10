@@ -44,7 +44,7 @@ public class loginpage extends AppCompatActivity {
         loginbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String un = username.getText().toString().trim();
+                String un = username.getText().toString().trim().toLowerCase();
                 String pw = password.getText().toString().trim();
 
                 verify(un, pw);

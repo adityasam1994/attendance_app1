@@ -2,12 +2,14 @@ package com.aditya.attendance_app;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -21,6 +23,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.kaopiz.kprogresshud.KProgressHUD;
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
 import com.opencsv.CSVWriter;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -32,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -43,6 +48,7 @@ public class admin_page extends AppCompatActivity {
     SharedPreferences sharedPreferences;
     ArrayList<DataSnapshot> attdata = new ArrayList<>();
     KProgressHUD khud;
+    boolean allper;
     DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("Attendance");
     DatabaseReference dbremp = FirebaseDatabase.getInstance().getReference("Employees");
 
@@ -61,9 +67,8 @@ public class admin_page extends AppCompatActivity {
                 .setAnimationSpeed(2)
                 .setDimAmount(0.5f);
         khud.show();
-
-        checkstorage();
         getemployees();
+        checkpermissions();
 
         sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
         logout = (ImageView) findViewById(R.id.logoutadmin);
@@ -105,6 +110,22 @@ public class admin_page extends AppCompatActivity {
         });
     }
 
+    private void checkpermissions(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            String[] permissions = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            Permissions.check(this, permissions, null, null, new PermissionHandler() {
+                @Override
+                public void onGranted() {
+                    Toast.makeText(admin_page.this, "Permissions granted", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }else {
+            allper = true;
+        }
+    }
+
     private void getemployees() {
         dbremp.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -120,21 +141,6 @@ public class admin_page extends AppCompatActivity {
 
             }
         });
-    }
-
-    private void checkstorage() {
-        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            String[] requestloc = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            requestPermissions(requestloc, 199);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 199) {
-            Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void showmonthpicker() {
@@ -185,6 +191,7 @@ public class admin_page extends AppCompatActivity {
 
     private void createfileExcel(String year, String month) {
         String fname = "Attendance_" + year + month;
+        File directory = new File(Environment.getExternalStorageDirectory() + File.separator , fname + ".xls");
         File filePath = new File(getExternalFilesDir(null) + "/" + fname + ".xls");
 
         String[] months = new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -221,92 +228,45 @@ public class admin_page extends AppCompatActivity {
                 HSSFRow hssfRow = hssfSheet.createRow(c1);
                 String empid = empds.getKey().toString();
                 if (att.hasChild(empid)) {
+                    HSSFCell hssfCell0 = hssfRow.createCell(0);
+                    hssfCell0.setCellValue(c1);
+
                     HSSFCell hssfCell1 = hssfRow.createCell(1);
-                    hssfCell1.setCellValue(getempname(empid));
+                    hssfCell1.setCellValue(getempname(empid).replace("_", " "));
 
                     HSSFCell hssfCell2 = hssfRow.createCell(2);
-                    hssfCell2.setCellValue(empid);
+                    hssfCell2.setCellValue(empid.replace("_", " "));
 
                     HSSFCell hssfCell3 = hssfRow.createCell(3);
                     hssfCell3.setCellValue(att.child(empid).child("IN").child("in_time").getValue().toString());
 
                     if (att.child(empid).hasChild("OUT")) {
                         HSSFCell hssfCell4 = hssfRow.createCell(4);
-                        hssfCell4.setCellValue(att.child(empid).child("OUT").child("in_time").getValue().toString());
+                        hssfCell4.setCellValue(att.child(empid).child("OUT").child("out_time").getValue().toString());
                     } else {
                         HSSFCell hssfCell4 = hssfRow.createCell(4);
                         hssfCell4.setCellValue("");
                     }
                 } else {
+                    HSSFCell hssfCell0 = hssfRow.createCell(0);
+                    hssfCell0.setCellValue(c1);
+
                     HSSFCell hssfCell1 = hssfRow.createCell(1);
-                    hssfCell1.setCellValue(getempname(empid));
+                    hssfCell1.setCellValue(getempname(empid).replace("_", " "));
 
                     HSSFCell hssfCell2 = hssfRow.createCell(2);
-                    hssfCell2.setCellValue(empid);
+                    hssfCell2.setCellValue(empid.replace("_", " "));
                 }
             }
             rn++;
         }
 
         try {
-            if (!filePath.exists()) {
-                filePath.createNewFile();
-            }
-
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-            hssfWorkbook.write(fileOutputStream);
-
-            if (fileOutputStream != null) {
-                fileOutputStream.flush();
-                fileOutputStream.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        khud.dismiss();
-        Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();
-    }
-
-    private void createfile(String nm) {
-        String fname = "Attendance_" + nm;
-        File file = new File(getExternalFilesDir(null) + "/" + fname + ".csv");
-
-        CSVWriter writer = null;
-        try {
-            writer = new CSVWriter(new FileWriter(file.toString()));
-
-            List<String[]> data = new ArrayList<String[]>();
-            for (DataSnapshot att : attdata) {
-                int c = 0;
-                data.add(new String[]{"S.No.", "Employee Name", "Employee Code", "In Time", "Out Time"});
-                for (DataSnapshot at : att.getChildren()) {
-                    String[] n = new String[5];
-                    c++;
-                    n[0] = String.valueOf(c);
-                    n[1] = getempname(at.getKey().toString());
-                    n[2] = at.getKey().toString();
-                    n[3] = at.child("IN").child("in_time").getValue().toString();
-                    if (at.hasChild("OUT")) {
-                        n[4] = at.child("OUT").child("in_time").getValue().toString();
-                    } else {
-                        n[4] = "";
-                    }
-                    data.add(n);
-                }
-            }
-
-//            data.add(new String[]{"Country", "Capital"});
-//            data.add(new String[]{"India", "New Delhi"});
-//            data.add(new String[]{"United States", "Washington D.C"});
-//            data.add(new String[]{"Germany", "Berlin"});
-
-            writer.writeAll(data); // data is adding to csv
-
-            writer.close();
+            OutputStream ops = new FileOutputStream(Environment.getExternalStorageDirectory() + File.separator + "/" +fname + ".xls");
+            hssfWorkbook.write(ops);
+            khud.dismiss();
             Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();
-            //callRead();
-        } catch (IOException e) {
-            //Toast.makeText(this, ""+e, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -315,7 +275,7 @@ public class admin_page extends AppCompatActivity {
         String c = "";
         for (DataSnapshot d : empdata) {
             if (d.getKey().toString().equals(ec)) {
-                c = d.child("name").getValue().toString();
+                c = d.getValue().toString();
             }
         }
 

@@ -3,6 +3,7 @@ package com.aditya.attendance_app;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -22,6 +23,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -48,6 +50,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.kaopiz.kprogresshud.KProgressHUD;
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -63,21 +67,14 @@ import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.OnReverseGeocodingListener;
 import io.nlopez.smartlocation.SmartLocation;
 
-public class option_page extends AppCompatActivity implements LocationListener {
+public class option_page extends AppCompatActivity implements LocationListener{
 
-    private static final int REQUEST_CODE_QR_SCAN = 101;
     LinearLayout intime, outtime;
     private static int REQUEST_LOC_ORDER = 123;
-    String project_code;
-    ArrayList<DataSnapshot> projectsdata = new ArrayList<>();
-    ArrayList<DataSnapshot> empdata = new ArrayList<>();
-    ArrayList<DataSnapshot> supdata = new ArrayList<>();
     LinearLayout stats;
 
     double lati = 0, longi = 0;
     String address = "";
-
-    ImageView backbtn;
 
     KProgressHUD khud;
 
@@ -85,14 +82,12 @@ public class option_page extends AppCompatActivity implements LocationListener {
 
     SharedPreferences sharedPreferences;
 
-    boolean start = true;
-
     LocationManager locationManager;
     PyObject pyObject;
     CheckView check;
     String empcode;
 
-    boolean camper, storageper, locper, gpsenable;
+    boolean allper, gpsenable;
 
     TextView employee_count, present_count, testT;
 
@@ -156,12 +151,8 @@ public class option_page extends AppCompatActivity implements LocationListener {
             @Override
             public void onClick(View v) {
                 action = "IN";
-                if (!camper) {
-                    checkcamera();
-                } else if (!locper) {
-                    checkLocation();
-                } else if (!storageper) {
-                    checkStorage();
+                if (!allper) {
+                    checkpermissions();
                 } else {
                     startcamera();
                 }
@@ -180,29 +171,40 @@ public class option_page extends AppCompatActivity implements LocationListener {
             @Override
             public void onClick(View v) {
                 action = "OUT";
-                if (!camper) {
-                    checkcamera();
-                } else if (!locper) {
-                    checkLocation();
-                } else if (!storageper) {
-                    checkStorage();
+                if (!allper) {
+                    checkpermissions();
                 } else {
                     startcamera();
                 }
             }
         });
 
-        checkcamera();
-        checkLocation();
-        checkStorage();
-        checkIfGPSEnabled();
-
         khud.show();
-
         getemps();
-
         new MyAsynctask(this).execute("10");
+        checkpermissions();
     }
+
+    private void checkpermissions(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            String[] permissions = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+            Permissions.check(this, permissions, null, null, new PermissionHandler() {
+                @Override
+                public void onGranted() {
+                    Toast.makeText(option_page.this, "Permissions granted", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }else {
+            allper = true;
+            checkIfGPSEnabled();
+        }
+    }
+
 
     private void getemps() {
         dbremp.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -266,34 +268,6 @@ public class option_page extends AppCompatActivity implements LocationListener {
         }
     }
 
-    private void checkcamera() {
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            String[] requestloc = new String[]{Manifest.permission.CAMERA};
-            requestPermissions(requestloc, REQUEST_LOC_ORDER);
-        } else {
-            camper = true;
-        }
-    }
-
-    private void checkStorage() {
-        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            String[] requestloc = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            requestPermissions(requestloc, 123);
-        } else {
-            storageper = true;
-        }
-    }
-
-    private void checkLocation() {
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            String[] requesLoc = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-            requestPermissions(requesLoc, 989);
-        } else {
-            locper = true;
-        }
-    }
-
     private void startcamera() {
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(cameraIntent, 100);
@@ -330,7 +304,11 @@ public class option_page extends AppCompatActivity implements LocationListener {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    checkcamera();
+                    if(!allper){
+                        checkpermissions();
+                    }else {
+                        startcamera();
+                    }
                 }
             });
 
@@ -452,16 +430,10 @@ public class option_page extends AppCompatActivity implements LocationListener {
             });
             builder.show();
         } else {
-            gpsenable=true;
+            gpsenable = true;
             //setgpslocation();
             startGettingLocation();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkIfGPSEnabled();
     }
 
     @SuppressLint("MissingPermission")
@@ -474,7 +446,7 @@ public class option_page extends AppCompatActivity implements LocationListener {
     }
 
     private void setgpslocation() {
-        SmartLocation.with(option_page.this).location().oneFix().start(new OnLocationUpdatedListener() {
+        SmartLocation.with(option_page.this).location().start(new OnLocationUpdatedListener() {
             @Override
             public void onLocationUpdated(Location location) {
                 SmartLocation.with(option_page.this).geocoding().reverse(location, new OnReverseGeocodingListener() {
@@ -498,21 +470,6 @@ public class option_page extends AppCompatActivity implements LocationListener {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOC_ORDER) {
-            camper = true;
-            Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show();
-        } else if (requestCode == 989) {
-            locper = true;
-            Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show();
-        } else if (requestCode == 123) {
-            storageper = true;
-            Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
     public void onLocationChanged(@NonNull Location location) {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
@@ -526,6 +483,10 @@ public class option_page extends AppCompatActivity implements LocationListener {
                 lati = lat;
                 longi = lon;
                 address = addresses.get(0).getAddressLine(0);
+                location_set = true;
+                if (python_set == true) {
+                    khud.dismiss();
+                }
 
             }
         } catch (IOException e) {

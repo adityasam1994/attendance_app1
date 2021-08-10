@@ -24,10 +24,11 @@
         <entry key="..\:/AndroidProjects/Attendnace_With_Face_Scan/app/src/main/res/layout/employee_card.xml" value="0.33" />
         <entry key="..\:/AndroidProjects/Attendnace_With_Face_Scan/app/src/main/res/layout/projects_template.xml" value="0.36666666666666664" />
         <entry key="..\:/AndroidProjects/Attendnace_With_Face_Scan/app/src/main/res/layout/transit_element.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/Aditya/StudioProjects/attendance_app1/app/src/main/res/layout/activity_option_page.xml" value="0.25" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">
