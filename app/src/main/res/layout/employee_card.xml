@@ -25,9 +25,9 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_gravity="center"
-                android:src="@drawable/backarrow"
-                app:civ_border_color="#EEEEEE"
-                app:civ_border_width="5dp"
+                android:src="@drawable/user"
+                app:civ_border_color="@color/theme_blue"
+                app:civ_border_width="2dp"
                 android:layout_marginRight="10dp"/>
 
             <TextView
@@ -53,7 +53,16 @@
                 android:layout_marginLeft="10dp"
                 android:layout_gravity="center"
                 android:src="@drawable/check"
-                android:visibility="invisible"
+                android:visibility="gone"
+                android:layout_marginRight="10dp"/>
+
+            <ImageView
+                android:id="@+id/absent"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginLeft="10dp"
+                android:layout_gravity="center"
+                android:src="@drawable/cross"
                 android:layout_marginRight="10dp"/>
 
         </LinearLayout>

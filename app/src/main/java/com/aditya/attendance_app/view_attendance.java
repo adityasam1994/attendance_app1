@@ -6,9 +6,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -28,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.kaopiz.kprogresshud.KProgressHUD;
 
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,7 +44,7 @@ public class view_attendance extends AppCompatActivity {
     EditText searchtext;
     TextView noresult, enterdate, view;
     DataSnapshot emps, atts, leaves;
-    LinearLayout containerlayout;
+    LinearLayout containerlayout, datelayout;
     String currentdate = "";
     DatabaseReference dbrEmp = FirebaseDatabase.getInstance().getReference("Employees");
     DatabaseReference dbrAtt = FirebaseDatabase.getInstance().getReference("Attendance");
@@ -69,6 +73,7 @@ public class view_attendance extends AppCompatActivity {
         noresult = (TextView) findViewById(R.id.noresult);
         enterdate = (TextView) findViewById(R.id.enterdate);
         view = (TextView) findViewById(R.id.view);
+        datelayout = (LinearLayout)findViewById(R.id.datelayout);
 
         settodaysdate();
         getemps();
@@ -91,7 +96,7 @@ public class view_attendance extends AppCompatActivity {
                 String st = s.toString().toLowerCase();
                 ArrayList<DataSnapshot> temp = new ArrayList<>();
                 for (DataSnapshot emp : emps.getChildren()) {
-                    if (emp.child("name").getValue().toString().toLowerCase().contains(st) || emp.getKey().toString().toLowerCase().contains(st)) {
+                    if (emp.getValue().toString().toLowerCase().contains(st) || emp.getKey().toString().toLowerCase().contains(st)) {
                         temp.add(emp);
                     }
                 }
@@ -115,9 +120,15 @@ public class view_attendance extends AppCompatActivity {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createcardsnew();
+                createcards();
             }
         });
+
+        if(getIntent().getExtras().getString("type").equals("admin")){
+            datelayout.setVisibility(View.VISIBLE);
+        }else {
+            datelayout.setVisibility(View.GONE);
+        }
 
     }
 
@@ -138,88 +149,6 @@ public class view_attendance extends AppCompatActivity {
         String f = spl[2] + spl[1] + spl[0];
 
         return f;
-    }
-
-    private void createcardsnew() {
-        containerlayout.removeAllViews();
-        if (emps != null) {
-            for (DataSnapshot ds : emps.getChildren()) {
-                boolean present = checkifpresent(ds.getKey().toString());
-
-                if (present) {
-                    LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
-                    LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card, null, false);
-                    containerlayout.addView(ll);
-
-                    TextView name = ll.findViewById(R.id.empname);
-                    name.setText(ds.child("name").getValue().toString());
-
-                    TextView code = ll.findViewById(R.id.empcode);
-                    code.setText(ds.getKey().toString());
-
-                    ImageView vacicon = ll.findViewById(R.id.vacicon);
-
-                    if (checkifonleave(ds.getKey().toString())) {
-                        vacicon.setVisibility(View.VISIBLE);
-                    }
-
-                    ll.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            EmpPop(ds);
-                        }
-                    });
-                }
-            }
-            for (DataSnapshot ds : emps.getChildren()) {
-                boolean present = checkifpresent(ds.getKey().toString());
-
-                if (!present) {
-                    LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
-                    LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card_absent, null, false);
-                    containerlayout.addView(ll);
-
-                    TextView name = ll.findViewById(R.id.empname);
-                    name.setText(ds.child("name").getValue().toString());
-
-                    TextView code = ll.findViewById(R.id.empcode);
-                    code.setText(ds.getKey().toString());
-
-                    ImageView vacicon = ll.findViewById(R.id.vacicon);
-
-                    String msg = "Absent";
-                    if (checkifonleave(ds.getKey().toString())) {
-                        vacicon.setVisibility(View.VISIBLE);
-                        msg = "On Vacation";
-                    }
-
-                    String finalMsg = msg;
-                    ll.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Toast.makeText(view_attendance.this, "" + finalMsg, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-        }
-        khud.dismiss();
-    }
-
-    private boolean checkifpresent(String ec) {
-        boolean present = false;
-
-        String ed = enterdate.getText().toString();
-        String ped = parsedate(ed);
-
-
-        if (atts.hasChild(ped)) {
-            if (atts.child(ped).hasChild(ec)) {
-                present = true;
-            }
-        }
-
-        return present;
     }
 
     private void showdatepicker() {
@@ -278,31 +207,49 @@ public class view_attendance extends AppCompatActivity {
         if (temp.size() != 0) {
             noresult.setVisibility(View.GONE);
             for (DataSnapshot ds : temp) {
-                boolean present = checkifpresent(ds.getKey().toString());
+                String nm = ds.getValue().toString();
+                String cd = ds.getKey().toString();
 
-                if (present) {
-                    String nm = ds.child("name").getValue().toString();
-                    String cd = ds.getKey().toString();
+                String ser = searchtext.getText().toString().toLowerCase();
 
-                    String ser = searchtext.getText().toString().toLowerCase();
+                if (nm.toLowerCase().contains(ser) || cd.toLowerCase().contains(ser)) {
+                    LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
+                    LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card, null, false);
 
-                    if (nm.toLowerCase().contains(ser) || cd.toLowerCase().contains(ser)) {
-                        LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
-                        LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card, null, false);
+                    containerlayout.addView(ll);
 
-                        containerlayout.addView(ll);
+                    ImageView img = ll.findViewById(R.id.profilepic);
 
-                        TextView name = ll.findViewById(R.id.empname);
-                        name.setText(ds.child("name").getValue().toString());
-
-                        TextView code = ll.findViewById(R.id.empcode);
-                        code.setText(ds.getKey().toString());
-
-                        ImageView vacicon = ll.findViewById(R.id.vacicon);
-
-                        if (checkifonleave(ds.getKey().toString())) {
-                            vacicon.setVisibility(View.VISIBLE);
+                    try {
+                        File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                        if (directory.exists()) {
+                            for (File fl : directory.listFiles()) {
+                                if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                                    Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                                    img.setImageBitmap(bmp);
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                    }
+
+                    TextView name = ll.findViewById(R.id.empname);
+                    name.setText(ds.getValue().toString());
+
+                    TextView code = ll.findViewById(R.id.empcode);
+                    code.setText(ds.getKey().toString());
+
+                    ImageView presimg = ll.findViewById(R.id.present);
+                    ImageView absent = ll.findViewById(R.id.absent);
+
+                    String cds = ds.getKey().toString();
+                    boolean pr = check_present(cds);
+
+                    if (pr) {
+                        presimg.setVisibility(View.VISIBLE);
+                        absent.setVisibility(View.GONE);
+                    }
 
                         ll.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -310,48 +257,6 @@ public class view_attendance extends AppCompatActivity {
                                 EmpPop(ds);
                             }
                         });
-                    }
-                }
-            }
-
-            for (DataSnapshot ds : temp) {
-                boolean present = checkifpresent(ds.getKey().toString());
-
-                if (!present) {
-                    String nm = ds.child("name").getValue().toString();
-                    String cd = ds.getKey().toString();
-
-                    String ser = searchtext.getText().toString().toLowerCase();
-
-                    if (nm.toLowerCase().contains(ser) || cd.toLowerCase().contains(ser)) {
-                        LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
-                        LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card_absent, null, false);
-
-                        containerlayout.addView(ll);
-
-                        TextView name = ll.findViewById(R.id.empname);
-                        name.setText(ds.child("name").getValue().toString());
-
-                        TextView code = ll.findViewById(R.id.empcode);
-                        code.setText(ds.getKey().toString());
-
-                        ImageView vacicon = ll.findViewById(R.id.vacicon);
-
-                        String msg = "Absent";
-
-                        if (checkifonleave(ds.getKey().toString())) {
-                            vacicon.setVisibility(View.VISIBLE);
-                            msg = "On Vacation";
-                        }
-
-                        String finalMsg = msg;
-                        ll.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Toast.makeText(view_attendance.this, "" + finalMsg, Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
                 }
             }
         } else {
@@ -368,8 +273,8 @@ public class view_attendance extends AppCompatActivity {
         window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
 
+        ImageView img = dialog.findViewById(R.id.profilepic);
         TextView date = dialog.findViewById(R.id.date);
-        TextView status = dialog.findViewById(R.id.status);
         TextView empname = dialog.findViewById(R.id.empname);
         TextView empcode = dialog.findViewById(R.id.empcode);
         TextView intime = dialog.findViewById(R.id.intime);
@@ -385,10 +290,22 @@ public class view_attendance extends AppCompatActivity {
             }
         });
 
-        LinearLayout transitlayout = dialog.findViewById(R.id.transitlayout);
+        try {
+            File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+            if (directory.exists()) {
+                for (File fl : directory.listFiles()) {
+                    if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                        Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                        img.setImageBitmap(bmp);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+        }
 
         date.setText(enterdate.getText().toString());
-        empname.setText(ds.child("name").getValue().toString());
+        empname.setText(ds.getValue().toString());
         empcode.setText(ds.getKey().toString());
 
         String it = getintime(ds.getKey().toString());
@@ -397,8 +314,6 @@ public class view_attendance extends AppCompatActivity {
 
         if (!ot.equals("")) {
             outtime.setText(ot);
-        } else {
-            outtime.setText("Not Signed Out Yet");
         }
 
         String il = getlocin(ds.getKey().toString());
@@ -424,179 +339,6 @@ public class view_attendance extends AppCompatActivity {
                 openOutMap(ds.getKey().toString());
             }
         });
-
-        transitlayout.removeAllViews();
-        String dt = parsedate(enterdate.getText().toString());
-        if (atts.hasChild(dt)) {
-            for (DataSnapshot dts : atts.child(dt).getChildren()) {
-                if (dts.getKey().toString().equals(ds.getKey().toString())) {
-                    if (dts.hasChild("TRANSIT")) {
-                        int c = 0;
-                        for (DataSnapshot trs : dts.child("TRANSIT").getChildren()) {
-                            c++;
-                            LayoutInflater inflater = LayoutInflater.from(view_attendance.this);
-                            LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.transit_element, null, false);
-                            transitlayout.addView(ll);
-
-                            TextView label = ll.findViewById(R.id.label);
-                            TextView transin = ll.findViewById(R.id.transin);
-                            TextView transout = ll.findViewById(R.id.transout);
-
-                            TextView transinloc = ll.findViewById(R.id.transinloc);
-                            TextView transoutloc = ll.findViewById(R.id.transoutloc);
-
-                            label.setText("Transit :" + c);
-                            transout.setText(trs.child("OUT").child("in_time").getValue().toString());
-                            if (trs.hasChild("IN")) {
-                                transin.setText(trs.child("IN").child("in_time").getValue().toString());
-                            }
-
-                            int finalC = c;
-
-                            String TOaddress = getTransOutAddress(ds.getKey().toString(), finalC);
-                            if(!TOaddress.equals("")) {
-                                transoutloc.setText(TOaddress);
-                            }
-
-                            String TIaddress = getTransInAddress(ds.getKey().toString(), finalC);
-                            if(!TIaddress.equals("")) {
-                                transinloc.setText(TIaddress);
-                            }
-
-                            transinloc.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    gettransinloc(ds.getKey().toString(), finalC);
-                                }
-                            });
-                            
-                            transoutloc.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    gettransoutloc(ds.getKey().toString(), finalC);
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-
-    }
-
-    private String getTransInAddress(String ec, int finalC) {
-        String addr = "";
-        String num = String.valueOf(finalC);
-        String dt = parsedate(enterdate.getText().toString());
-
-        if(atts.hasChild(dt)){
-            if(atts.child(dt).hasChild(ec)){
-                DataSnapshot user = atts.child(dt).child(ec);
-                if(user.hasChild("TRANSIT")){
-                    DataSnapshot count = user.child("TRANSIT").child(num);
-                    if(count.hasChild("IN")) {
-                        if (count.child("IN").hasChild("address")) {
-                            addr = count.child("IN").child("address").getValue().toString();
-                        }
-                    }
-                }
-            }
-        }
-
-        return addr;
-    }
-
-    private String getTransOutAddress(String ec, int finalC) {
-        String addr = "";
-        String num = String.valueOf(finalC);
-        String dt = parsedate(enterdate.getText().toString());
-
-        if(atts.hasChild(dt)){
-            if(atts.child(dt).hasChild(ec)){
-                DataSnapshot user = atts.child(dt).child(ec);
-                if(user.hasChild("TRANSIT")){
-                    DataSnapshot count = user.child("TRANSIT").child(num);
-                    if(count.child("OUT").hasChild("address")){
-                        addr = count.child("OUT").child("address").getValue().toString();
-                    }
-                }
-            }
-        }
-
-        return addr;
-    }
-
-    private void gettransinloc(String ec, int finalC) {
-        String num = String.valueOf(finalC);
-        String dt = parsedate(enterdate.getText().toString());
-
-        if (atts.hasChild(dt)) {
-            if (atts.child(dt).hasChild(ec)) {
-                DataSnapshot user = atts.child(dt).child(ec);
-                if (user.hasChild("TRANSIT")) {
-                    DataSnapshot count = user.child("TRANSIT").child(num);
-                    String lati = "0", longi = "0";
-                    if(count.hasChild("IN")) {
-                        if (count.child("IN").hasChild("latitude")) {
-                            lati = count.child("IN").child("latitude").getValue().toString();
-                        }
-                        if (count.child("IN").hasChild("longitude")) {
-                            longi = count.child("IN").child("longitude").getValue().toString();
-                        }
-
-                        if (!lati.equals("0") || !longi.equals("0")) {
-                            Uri gmmIntentUri = Uri.parse("geo:" + lati + "," + longi + "?q=" + lati + "," + longi);
-                            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                            mapIntent.setPackage("com.google.android.apps.maps");
-                            if (mapIntent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(mapIntent);
-                            } else {
-                                Toast.makeText(this, "No app was found to open the map", Toast.LENGTH_SHORT).show();
-                            }
-                        }else {
-                            Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    private void gettransoutloc(String ec, int finalC) {
-        String num = String.valueOf(finalC);
-        String dt = parsedate(enterdate.getText().toString());
-
-        if (atts.hasChild(dt)) {
-            if (atts.child(dt).hasChild(ec)) {
-                DataSnapshot user = atts.child(dt).child(ec);
-                if (user.hasChild("TRANSIT")) {
-                    DataSnapshot count = user.child("TRANSIT").child(num);
-                    String lati = "0", longi = "0";
-                    if (count.child("OUT").hasChild("latitude")) {
-                        lati = count.child("OUT").child("latitude").getValue().toString();
-                    }
-                    if (count.child("OUT").hasChild("longitude")) {
-                        longi = count.child("OUT").child("longitude").getValue().toString();
-                    }
-
-                    if (!lati.equals("0") || !longi.equals("0")) {
-                        Uri gmmIntentUri = Uri.parse("geo:" + lati + "," + longi + "?q=" + lati + "," + longi);
-                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                        mapIntent.setPackage("com.google.android.apps.maps");
-                        if (mapIntent.resolveActivity(getPackageManager()) != null) {
-                            startActivity(mapIntent);
-                        } else {
-                            Toast.makeText(this, "No app was found to open the map", Toast.LENGTH_SHORT).show();
-                        }
-                    }else {
-                        Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        }
-
     }
 
     private void openOutMap(String ec) {
@@ -622,7 +364,7 @@ public class view_attendance extends AppCompatActivity {
                         } else {
                             Toast.makeText(this, "No app was found to open the map", Toast.LENGTH_SHORT).show();
                         }
-                    }else {
+                    } else {
                         Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -653,7 +395,7 @@ public class view_attendance extends AppCompatActivity {
                     } else {
                         Toast.makeText(this, "No app was found to open the map", Toast.LENGTH_SHORT).show();
                     }
-                }else {
+                } else {
                     Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -699,7 +441,7 @@ public class view_attendance extends AppCompatActivity {
             for (DataSnapshot ds : atts.child(dt).getChildren()) {
                 if (ds.getKey().toString().equals(ec)) {
                     if (ds.hasChild("OUT")) {
-                        ot = ds.child("OUT").child("in_time").getValue().toString();
+                        ot = ds.child("OUT").child("out_time").getValue().toString();
                     }
                 }
             }
@@ -725,7 +467,6 @@ public class view_attendance extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 emps = snapshot;
-
                 getattendance();
             }
 
@@ -741,22 +482,7 @@ public class view_attendance extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 atts = snapshot;
-                getleaves();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    private void getleaves() {
-        dbrvac.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                leaves = snapshot;
-                createcardsnew();
+                createcards();
             }
 
             @Override
@@ -842,6 +568,25 @@ public class view_attendance extends AppCompatActivity {
         return ch;
     }
 
+    private boolean check_present(String code) {
+        boolean pres = false;
+        String dt = enterdate.getText().toString();
+        String[] dt_split = dt.split("/");
+        String dt_joint = dt_split[2] + dt_split[1] + dt_split[0];
+
+        try {
+            for (DataSnapshot ds : atts.child(dt_joint).getChildren()) {
+                if (ds.getKey().toString().equals(code)) {
+                    pres = true;
+                }
+            }
+        } catch (Exception e) {
+
+        }
+
+        return pres;
+    }
+
     private void createcards() {
         containerlayout.removeAllViews();
         if (emps != null) {
@@ -850,16 +595,37 @@ public class view_attendance extends AppCompatActivity {
                 LinearLayout ll = (LinearLayout) inflater.inflate(R.layout.employee_card, null, false);
                 containerlayout.addView(ll);
 
+                ImageView img = ll.findViewById(R.id.profilepic);
+
+                try {
+                    File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                    if (directory.exists()) {
+                        for (File fl : directory.listFiles()) {
+                            if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                                Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                                img.setImageBitmap(bmp);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                }
+
                 TextView name = ll.findViewById(R.id.empname);
-                name.setText(ds.child("name").getValue().toString());
+                name.setText(ds.getValue().toString());
 
                 TextView code = ll.findViewById(R.id.empcode);
                 code.setText(ds.getKey().toString());
 
-                ImageView vacicon = ll.findViewById(R.id.vacicon);
+                ImageView present = ll.findViewById(R.id.present);
+                ImageView absent = ll.findViewById(R.id.absent);
 
-                if (checkifonleave(ds.getKey().toString())) {
-                    vacicon.setVisibility(View.VISIBLE);
+                String cd = ds.getKey().toString();
+                boolean pr = check_present(cd);
+
+                if (pr) {
+                    present.setVisibility(View.VISIBLE);
+                    absent.setVisibility(View.GONE);
                 }
 
                 ll.setOnClickListener(new View.OnClickListener() {

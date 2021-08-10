@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -77,10 +78,6 @@ public class My_settings extends AppCompatActivity {
     private void download_images() {
         khud.show();
         updated = true;
-        File directory = new File(Environment.getExternalStorageDirectory()+File.separator+"Emp_Images");
-        if(!directory.exists()) {
-            directory.mkdirs();
-        }
         sref.child("worker_images").listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
             @Override
             public void onSuccess(ListResult listResult) {
@@ -88,12 +85,32 @@ public class My_settings extends AppCompatActivity {
                     String[] sp = item.toString().split("/");
                     String nm = sp[sp.length -1].split(Pattern.quote("."))[0];
 
-                    for(File fl : directory.listFiles()){
-                        fl.delete();
-                    }
+                    if(Build.VERSION.SDK_INT < 30) {
+                        File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                        if (!directory.exists()) {
+                            directory.mkdirs();
+                        }
 
-                    File imgfile = new File(directory, nm+".jpg");
-                    item.getFile(imgfile);
+                        for(File fl : directory.listFiles()){
+                            fl.delete();
+                        }
+
+                        File imgfile = new File(directory, nm+".jpg");
+                        item.getFile(imgfile);
+
+                    }else {
+                        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + File.separator + "Emp_Images");
+                        if (!directory.exists()) {
+                            directory.mkdirs();
+                        }
+
+                        for(File fl : directory.listFiles()){
+                            fl.delete();
+                        }
+
+                        File imgfile = new File(directory, nm+".jpg");
+                        item.getFile(imgfile);
+                    }
                 }
             }
         });

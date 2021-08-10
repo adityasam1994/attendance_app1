@@ -39,7 +39,7 @@ import java.util.List;
 public class admin_page extends AppCompatActivity {
 
     ImageView logout;
-    TextView getatt, manageemp, manageproj, managevac, viewatt;
+    TextView getatt, manageemp, viewatt;
     SharedPreferences sharedPreferences;
     ArrayList<DataSnapshot> attdata = new ArrayList<>();
     KProgressHUD khud;
@@ -69,21 +69,14 @@ public class admin_page extends AppCompatActivity {
         logout = (ImageView) findViewById(R.id.logoutadmin);
         getatt = (TextView) findViewById(R.id.getatt);
         manageemp = (TextView) findViewById(R.id.manageemp);
-        manageproj = (TextView) findViewById(R.id.manageproj);
-        managevac = (TextView) findViewById(R.id.managevac);
         viewatt = (TextView)findViewById(R.id.viewatt);
 
         viewatt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(admin_page.this, view_attendance.class));
-            }
-        });
-
-        managevac.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(admin_page.this, vacations.class));
+                Intent intent = new Intent(admin_page.this, view_attendance.class);
+                intent.putExtra("type", "admin");
+                startActivity(intent);
             }
         });
 
@@ -98,13 +91,6 @@ public class admin_page extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(admin_page.this, AllEmployeesPage.class));
-            }
-        });
-
-        manageproj.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(admin_page.this, Manage_projects.class));
             }
         });
 
@@ -259,32 +245,6 @@ public class admin_page extends AppCompatActivity {
                     hssfCell2.setCellValue(empid);
                 }
             }
-
-//            for(DataSnapshot at:att.getChildren()){
-//                c++;
-//
-//                HSSFRow hssfRow = hssfSheet.createRow(c);
-//                HSSFCell hssfCell = hssfRow.createCell(0);
-//                hssfCell.setCellValue(String.valueOf(c));
-//
-//                HSSFCell hssfCell1 = hssfRow.createCell(1);
-//                hssfCell1.setCellValue(getempname(at.getKey().toString()));
-//
-//                HSSFCell hssfCell2 = hssfRow.createCell(2);
-//                hssfCell2.setCellValue(at.getKey().toString());
-//
-//                HSSFCell hssfCell3 = hssfRow.createCell(3);
-//                hssfCell3.setCellValue(at.child("IN").child("in_time").getValue().toString());
-//
-//                if(at.hasChild("OUT")){
-//                    HSSFCell hssfCell4 = hssfRow.createCell(4);
-//                    hssfCell4.setCellValue(at.child("OUT").child("in_time").getValue().toString());
-//                }else {
-//                    HSSFCell hssfCell4 = hssfRow.createCell(4);
-//                    hssfCell4.setCellValue("");
-//                }
-//            }
-
             rn++;
         }
 

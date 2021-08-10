@@ -3,11 +3,14 @@ package com.aditya.attendance_app;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
 import java.sql.Struct;
 
 public class MyAsynctask extends AsyncTask<String, String, String> {
@@ -44,17 +48,16 @@ public class MyAsynctask extends AsyncTask<String, String, String> {
             py = Python.getInstance();
 
             pyObject1 = py.getModule("myscript");
+
         }
         return null;
     }
 
     @Override
     protected void onProgressUpdate(String... text) {
-        //progressDialog.setMessage(text[0]);
     }
 
     protected void onPostExecute(String result) {
-        //progressDialog.dismiss();
         ((option_page) context).python_set = true;
         ((option_page) context).pyObject = pyObject1;
         if (((option_page) context).location_set == true){

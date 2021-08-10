@@ -88,4 +88,16 @@
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/addemp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bottom_button_bg"
+        android:fontFamily="@font/nexa_bold"
+        android:gravity="center_horizontal"
+        android:padding="10dp"
+        android:text="Add Employee"
+        android:textColor="@color/white"
+        android:textSize="20dp" />
 </LinearLayout>

@@ -14,13 +14,15 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
         <ImageView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ulogo1"/>
+            android:layout_height="100dp"
+            android:src="@drawable/att_icon"/>
 
         <TextView
             android:id="@+id/getatt"
@@ -42,34 +44,6 @@
             android:layout_height="wrap_content"
             android:text="Manage Employees"
             android:fontFamily="@font/nexa_bold"
-            android:background="@drawable/roundedbtnout"
-            android:gravity="center"
-            android:padding="10dp"
-            android:elevation="10dp"
-            android:layout_marginTop="30dp"
-            android:textColor="@color/white"
-            android:textSize="18dp"/>
-
-        <TextView
-            android:id="@+id/manageproj"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Manage Projects"
-            android:fontFamily="@font/nexa_bold"
-            android:background="@drawable/roundedbtntransit"
-            android:gravity="center"
-            android:padding="10dp"
-            android:elevation="10dp"
-            android:layout_marginTop="30dp"
-            android:textColor="@color/white"
-            android:textSize="18dp"/>
-
-        <TextView
-            android:id="@+id/managevac"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Manage Vacations"
-            android:fontFamily="@font/nexa_bold"
             android:background="@drawable/rounded_btn"
             android:gravity="center"
             android:padding="10dp"
@@ -84,7 +58,7 @@
             android:layout_height="wrap_content"
             android:text="View Attendance"
             android:fontFamily="@font/nexa_bold"
-            android:background="@drawable/roundedbtntransit"
+            android:background="@drawable/rounded_btn"
             android:gravity="center"
             android:padding="10dp"
             android:elevation="10dp"

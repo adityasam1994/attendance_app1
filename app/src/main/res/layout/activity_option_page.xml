@@ -166,6 +166,7 @@
                             android:textSize="18dp" />
 
                         <TextView
+                            android:id="@+id/empcount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -201,6 +202,7 @@
                             android:textSize="18dp" />
 
                         <TextView
+                            android:id="@+id/present_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
@@ -221,6 +223,14 @@
             android:layout_gravity="center"
             app:checkView_strokeColor="@color/green"
             app:checkView_strokeWidth="15dp" />
+
+        <ImageView
+            android:id="@+id/logout"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="right|bottom"
+            android:layout_margin="15dp"
+            android:src="@drawable/ic_iconfinder_icons_exit2_1564506"/>
 
     </FrameLayout>
 </LinearLayout>

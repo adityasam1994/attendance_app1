@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
@@ -12,15 +13,6 @@
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:padding="10dp">
-
-        <TextView
-            android:id="@+id/label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:fontFamily="@font/nexa_bold"
-            android:text="Today's Attendance"
-            android:textSize="18dp" />
 
         <ScrollView
             android:layout_width="match_parent"
@@ -35,9 +27,11 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="15dp"
-                    android:layout_marginRight="15dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="5dp"
+                    android:background="@drawable/red_border"
+                    android:layout_marginBottom="15dp"
+                    android:gravity="center">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -46,44 +40,58 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/nexa_bold"
-                            android:text="Date" />
-
-                        <TextView
-                            android:id="@+id/date"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="15dp"
-                            android:fontFamily="@font/nexa_light"
-                            android:text="Date"
-                            android:textSize="16dp" />
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/profilepic"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/user"
+                            app:civ_border_color="@color/theme_blue"
+                            app:civ_border_width="3dp" />
 
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/theme_blue"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="right"
-                        android:orientation="vertical"
-                        android:visibility="gone">
+                        android:gravity="center"
+                        android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/nexa_bold"
-                            android:text="Status" />
+                            android:text="Employee Name" />
 
                         <TextView
-                            android:id="@+id/status"
+                            android:id="@+id/empname"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="15dp"
                             android:fontFamily="@font/nexa_light"
-                            android:text="Status"
+                            android:text="--------"
+                            android:textSize="16dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/nexa_bold"
+                            android:text="Employee code" />
+
+                        <TextView
+                            android:id="@+id/empcode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/nexa_light"
+                            android:text="--------"
                             android:textSize="16dp" />
 
                     </LinearLayout>
@@ -94,30 +102,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/nexa_bold"
-                    android:text="Employee Name" />
+                    android:text="Date" />
 
                 <TextView
-                    android:id="@+id/empname"
+                    android:id="@+id/date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
                     android:fontFamily="@font/nexa_light"
-                    android:text="Employee Name"
-                    android:textSize="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/nexa_bold"
-                    android:text="Employee code" />
-
-                <TextView
-                    android:id="@+id/empcode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:text="--------"
                     android:layout_marginBottom="15dp"
-                    android:fontFamily="@font/nexa_light"
-                    android:text="Employee Code"
                     android:textSize="16dp" />
 
                 <TextView
@@ -132,7 +125,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="15dp"
                     android:fontFamily="@font/nexa_light"
-                    android:text="Sign In Time"
+                    android:text="--------"
                     android:textSize="16dp" />
 
                 <TextView
@@ -148,17 +141,8 @@
                     android:layout_marginBottom="15dp"
                     android:fontFamily="@font/nexa_light"
                     android:gravity="center_horizontal"
-                    android:text="Sign In Location"
+                    android:text="--------"
                     android:textSize="16dp" />
-
-                <LinearLayout
-                    android:id="@+id/transitlayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <include layout="@layout/transit_element" />
-                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -172,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="15dp"
                     android:fontFamily="@font/nexa_light"
-                    android:text="Sign Out Time"
+                    android:text="--------"
                     android:textSize="16dp" />
 
                 <TextView
@@ -188,17 +172,20 @@
                     android:layout_marginBottom="15dp"
                     android:fontFamily="@font/nexa_light"
                     android:gravity="center_horizontal"
-                    android:text="Not Signed Out Yet"
+                    android:text="--------"
                     android:textSize="16dp" />
 
                 <TextView
                     android:id="@+id/close"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/rounded_btn"
                     android:fontFamily="@font/nexa_bold"
                     android:gravity="center_horizontal"
-                    android:padding="10dp"
+                    android:paddingLeft="30dp"
+                    android:paddingRight="30dp"
+                    android:paddingBottom="10dp"
+                    android:paddingTop="10dp"
                     android:text="Close"
                     android:textColor="@color/white"
                     android:textSize="18dp" />

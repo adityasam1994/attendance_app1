@@ -175,8 +175,6 @@ public class vacations extends AppCompatActivity {
 
         EditText empname = dialog.findViewById(R.id.empname);
         EditText empcode = dialog.findViewById(R.id.empcode);
-        EditText empdesig = dialog.findViewById(R.id.empdesig);
-        EditText emphour = dialog.findViewById(R.id.emphour);
 
         TextView savebtn = dialog.findViewById(R.id.save);
 
@@ -185,21 +183,7 @@ public class vacations extends AppCompatActivity {
             public void onClick(View v) {
                 String nm = empname.getText().toString().trim();
                 String cd = empcode.getText().toString().trim();
-                String des = empdesig.getText().toString().trim();
-                String wh = emphour.getText().toString().trim();
 
-                save_employee se = new save_employee(nm, des, wh);
-                dbremp.child(cd).setValue(se).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        dialog.dismiss();
-//                        Intent intent = getIntent();
-//                        finish();
-//                        startActivity(intent);
-                        getleaves();
-                        Toast.makeText(vacations.this, "Saved", Toast.LENGTH_SHORT).show();
-                    }
-                });
             }
         });
     }

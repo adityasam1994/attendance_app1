@@ -74,8 +74,8 @@ public class option_page extends AppCompatActivity implements LocationListener {
     ArrayList<DataSnapshot> supdata = new ArrayList<>();
     LinearLayout stats;
 
-    double lati=0, longi=0;
-    String address="";
+    double lati = 0, longi = 0;
+    String address = "";
 
     ImageView backbtn;
 
@@ -88,16 +88,20 @@ public class option_page extends AppCompatActivity implements LocationListener {
     boolean start = true;
 
     LocationManager locationManager;
-    Python py;
     PyObject pyObject;
     CheckView check;
     String empcode;
 
-    ImageView settingbtn;
+    boolean camper, storageper, locper, gpsenable;
+
+    TextView employee_count, present_count, testT;
+
+    ImageView settingbtn, logout;
 
     boolean python_set, location_set;
 
     DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("Attendance");
+    DatabaseReference dbremp = FirebaseDatabase.getInstance().getReference("Employees");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,29 +115,40 @@ public class option_page extends AppCompatActivity implements LocationListener {
                 .setAnimationSpeed(2)
                 .setDimAmount(0.5f);
 
-        File directory = new File(Environment.getExternalStorageDirectory()+File.separator+"Emp_Images");
-        if(!directory.exists()) {
+        File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+        if (!directory.exists()) {
             directory.mkdirs();
         }
 
-        new MyAsynctask(this).execute("10");
-
         sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
 
-        locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-        checkcamera();
-        checkIfGPSEnabled();
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         intime = (LinearLayout) findViewById(R.id.intime);
         outtime = (LinearLayout) findViewById(R.id.outtime);
         check = (CheckView) findViewById(R.id.check);
-        settingbtn = (ImageView)findViewById(R.id.settingbtn);
-        stats = (LinearLayout)findViewById(R.id.stats);
+        settingbtn = (ImageView) findViewById(R.id.settingbtn);
+        stats = (LinearLayout) findViewById(R.id.stats);
+        employee_count = (TextView) findViewById(R.id.empcount);
+        present_count = (TextView) findViewById(R.id.present_count);
+        logout = (ImageView) findViewById(R.id.logout);
+
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean t = sharedPreferences.edit().putString("username", "").commit();
+                if (t) {
+                    startActivity(new Intent(option_page.this, loginpage.class));
+                }
+            }
+        });
 
         stats.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(option_page.this, AllEmployeesPage.class));
+                Intent intent = new Intent(option_page.this, view_attendance.class);
+                intent.putExtra("type", "user");
+                startActivity(intent);
             }
         });
 
@@ -141,7 +156,16 @@ public class option_page extends AppCompatActivity implements LocationListener {
             @Override
             public void onClick(View v) {
                 action = "IN";
-                checkcamera();
+                if (!camper) {
+                    checkcamera();
+                } else if (!locper) {
+                    checkLocation();
+                } else if (!storageper) {
+                    checkStorage();
+                } else {
+                    startcamera();
+                }
+
             }
         });
 
@@ -156,9 +180,58 @@ public class option_page extends AppCompatActivity implements LocationListener {
             @Override
             public void onClick(View v) {
                 action = "OUT";
-                checkcamera();
+                if (!camper) {
+                    checkcamera();
+                } else if (!locper) {
+                    checkLocation();
+                } else if (!storageper) {
+                    checkStorage();
+                } else {
+                    startcamera();
+                }
             }
         });
+
+        checkcamera();
+        checkLocation();
+        checkStorage();
+        checkIfGPSEnabled();
+
+        khud.show();
+
+        getemps();
+
+        new MyAsynctask(this).execute("10");
+    }
+
+    private void getemps() {
+        dbremp.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                employee_count.setText((int) snapshot.getChildrenCount() + "");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        try {
+            dbr.child(gettime(0)).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    present_count.setText((int) snapshot.getChildrenCount() + "");
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        } catch (Exception e) {
+
+        }
     }
 
     private String gettime(int len) {
@@ -198,7 +271,16 @@ public class option_page extends AppCompatActivity implements LocationListener {
             String[] requestloc = new String[]{Manifest.permission.CAMERA};
             requestPermissions(requestloc, REQUEST_LOC_ORDER);
         } else {
-            checkLocation();
+            camper = true;
+        }
+    }
+
+    private void checkStorage() {
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            String[] requestloc = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            requestPermissions(requestloc, 123);
+        } else {
+            storageper = true;
         }
     }
 
@@ -208,21 +290,16 @@ public class option_page extends AppCompatActivity implements LocationListener {
             String[] requesLoc = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
             requestPermissions(requesLoc, 989);
         } else {
-            if (start == false) {
-                checkIfGPSEnabled();
-                startcamera();
-            } else {
-                start = false;
-            }
+            locper = true;
         }
     }
 
     private void startcamera() {
-        Intent cameraIntent=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(cameraIntent, 100);
     }
 
-    private void hidecheck(){
+    private void hidecheck() {
         check.uncheck();
     }
 
@@ -252,6 +329,7 @@ public class option_page extends AppCompatActivity implements LocationListener {
             cagain.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    dialog.dismiss();
                     checkcamera();
                 }
             });
@@ -262,12 +340,13 @@ public class option_page extends AppCompatActivity implements LocationListener {
                     check.check();
                     dialog.dismiss();
 
-                    if(action == "IN") {
+                    if (action == "IN") {
                         Add_in_time ait = new Add_in_time(gettime(1), lati, longi, address);
 
                         dbr.child(gettime(0)).child(empcode).child("IN").setValue(ait).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void unused) {
+                                getemps();
                                 new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
@@ -282,12 +361,13 @@ public class option_page extends AppCompatActivity implements LocationListener {
                             }
                         });
                     }
-                    if(action == "OUT") {
+                    if (action == "OUT") {
                         Add_out_time aot = new Add_out_time(gettime(1), lati, longi, address);
 
                         dbr.child(gettime(0)).child(empcode).child("OUT").setValue(aot).addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void unused) {
+                                getemps();
                                 new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
@@ -317,40 +397,33 @@ public class option_page extends AppCompatActivity implements LocationListener {
                         int width = 250;
                         int height = Math.round(width / aspectRatio);
 
-                        Bitmap.createScaledBitmap(photo, width, height, false).compress(Bitmap.CompressFormat.JPEG, 100, out); // bmp is your Bitmap instance
-                        // PNG is a lossless format, the compression factor (100) is ignored
+                        Bitmap.createScaledBitmap(photo, width, height, false).compress(Bitmap.CompressFormat.JPEG, 100, out);
 
                         PyObject pobj = pyObject.callAttr("main", "/data/user/0/com.aditya.attendance_app/files/chaquopy/AssetFinder/app/test.jpg");
                         verify.setVisibility(View.GONE);
 
-                        if(!pobj.toString().equals("")) {
-                            if(pobj.toString().equals("No Face Found")){
-                                empname.setText("No Face Found");
-                                done.setVisibility(View.GONE);
-                                cagain.setVisibility(View.VISIBLE);
-                            }else {
-                                String nm = pobj.toString().split(Pattern.quote("."))[0];
+                        if (pobj.toString().contains("!!")) {
+                            String nm = pobj.toString().split(Pattern.quote("."))[0];
 
-                                File directory = new File(Environment.getExternalStorageDirectory()+File.separator+"Emp_Images", nm+".jpg");
+                            File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images", nm + ".jpg");
 
-                                Bitmap myBitmap = BitmapFactory.decodeFile(directory.getAbsolutePath());
+                            Bitmap myBitmap = BitmapFactory.decodeFile(directory.getAbsolutePath());
 
-                                myimage.setImageBitmap(myBitmap);
+                            myimage.setImageBitmap(myBitmap);
 
-                                empname.setText(pobj.toString().split("!!")[0]);
-                                empcode = pobj.toString().split("!!")[1];
+                            empname.setText(pobj.toString().split("!!")[0]);
+                            empcode = pobj.toString().split("!!")[1];
 
-                                done.setVisibility(View.VISIBLE);
-                                cagain.setVisibility(View.GONE);
-                            }
-                        }else {
-                            empname.setText("Could nor recognize face");
+                            done.setVisibility(View.VISIBLE);
+                            cagain.setVisibility(View.GONE);
+                        } else {
+                            empname.setText(pobj.toString());
                             done.setVisibility(View.GONE);
                             cagain.setVisibility(View.VISIBLE);
+                            verify.setVisibility(View.GONE);
                         }
-                        //checkResult(pobj.toString());
                     } catch (IOException e) {
-                        Toast.makeText(option_page.this, "Error"+e, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(option_page.this, "Error" + e, Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
 
@@ -378,8 +451,8 @@ public class option_page extends AppCompatActivity implements LocationListener {
                 }
             });
             builder.show();
-        }else {
-            khud.show();
+        } else {
+            gpsenable=true;
             //setgpslocation();
             startGettingLocation();
         }
@@ -396,7 +469,7 @@ public class option_page extends AppCompatActivity implements LocationListener {
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         String provide = locationManager.getBestProvider(criteria, true);
-        locationManager.requestLocationUpdates(provide,5*1000,10,(LocationListener) this);
+        locationManager.requestLocationUpdates(provide, 5 * 1000, 10, (LocationListener) this);
         setgpslocation();
     }
 
@@ -407,15 +480,15 @@ public class option_page extends AppCompatActivity implements LocationListener {
                 SmartLocation.with(option_page.this).geocoding().reverse(location, new OnReverseGeocodingListener() {
                     @Override
                     public void onAddressResolved(Location location, List<Address> list) {
-                        if(list.size() > 0){
+                        if (list.size() > 0) {
                             lati = location.getLatitude();
                             longi = location.getLongitude();
                             address = (list.get(0).getAddressLine(0));
                             location_set = true;
-                            if(python_set == true) {
+                            if (python_set == true) {
                                 khud.dismiss();
                             }
-                        }else {
+                        } else {
                             setgpslocation();
                         }
                     }
@@ -428,9 +501,14 @@ public class option_page extends AppCompatActivity implements LocationListener {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_LOC_ORDER) {
+            camper = true;
             Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show();
         } else if (requestCode == 989) {
+            locper = true;
             Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show();
+        } else if (requestCode == 123) {
+            storageper = true;
+            Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -443,15 +521,15 @@ public class option_page extends AppCompatActivity implements LocationListener {
 
         List<Address> addresses = null;
         try {
-            addresses = geo.getFromLocation(lat,lon, 1);
-            if(!addresses.isEmpty() && addresses != null){
+            addresses = geo.getFromLocation(lat, lon, 1);
+            if (!addresses.isEmpty() && addresses != null) {
                 lati = lat;
                 longi = lon;
                 address = addresses.get(0).getAddressLine(0);
 
             }
         } catch (IOException e) {
-            Toast.makeText(this, ""+e, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "" + e, Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
