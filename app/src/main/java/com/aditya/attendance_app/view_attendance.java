@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
@@ -220,8 +221,8 @@ public class view_attendance extends AppCompatActivity {
 
                     ImageView img = ll.findViewById(R.id.profilepic);
 
-                    try {
-                        File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+ File.separator + "Emp_Images");
                         if (directory.exists()) {
                             for (File fl : directory.listFiles()) {
                                 if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
@@ -230,8 +231,20 @@ public class view_attendance extends AppCompatActivity {
                                 }
                             }
                         }
-                    } catch (Exception e) {
-                        img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                    }else {
+                        try {
+                            File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                            if (directory.exists()) {
+                                for (File fl : directory.listFiles()) {
+                                    if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                                        Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                                        img.setImageBitmap(bmp);
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                        }
                     }
 
                     TextView name = ll.findViewById(R.id.empname);

@@ -7,18 +7,23 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,6 +48,7 @@ import com.kaopiz.kprogresshud.KProgressHUD;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,15 +61,15 @@ public class AllEmployeesPage extends AppCompatActivity {
     DataSnapshot leaves = null;
     DatabaseReference dbremp = FirebaseDatabase.getInstance().getReference("Employees");
     TextView addempbtn, noresult;
-    ImageView backbtn, addimage;
+    ImageView backbtn, addimage, editimage;
     EditText editsearch;
     KProgressHUD khud;
     Python py;
     PyObject pyObject;
-    Bitmap myphoto;
+    Bitmap myphoto, myphotoedit;
     Uri selectedfile;
     StorageReference storageReference;
-
+    String type = "add";
     LinearLayout cardcontainer;
 
     @Override
@@ -202,6 +208,7 @@ public class AllEmployeesPage extends AppCompatActivity {
         addimage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                type = "add";
                 checkcamera();
             }
         });
@@ -287,20 +294,78 @@ public class AllEmployeesPage extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == 100 && resultCode == RESULT_OK) {
-            selectedfile = data.getData();
-            myphoto = (Bitmap) data.getExtras().get("data");
-            addimage.setImageBitmap(myphoto);
+            if(type == "add") {
+                selectedfile = data.getData();
+                myphoto = (Bitmap) data.getExtras().get("data");
+                addimage.setImageBitmap(myphoto);
+            }else {
+                selectedfile = data.getData();
+                myphotoedit = (Bitmap) data.getExtras().get("data");
+                editimage.setImageBitmap(myphotoedit);
+            }
+        }
+        if (requestCode == 101 && resultCode == RESULT_OK && null != data) {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = { MediaStore.Images.Media.DATA };
+            Cursor cursor = getContentResolver().query(selectedImage,
+                    filePathColumn, null, null, null);
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            String picturePath = cursor.getString(columnIndex);
+            cursor.close();
+
+            if(type == "add") {
+                selectedfile = selectedImage;
+                try {
+                    myphoto = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedfile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                addimage.setImageBitmap(myphoto);
+            }else {
+                selectedfile = selectedImage;
+                try {
+                    myphotoedit = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedfile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                editimage.setImageBitmap(myphotoedit);
+            }
+            // String picturePath contains the path of selected Image
         }
     }
 
     private void checkcamera() {
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            String[] requestloc = new String[]{Manifest.permission.CAMERA};
-            requestPermissions(requestloc, 980);
-        } else {
-            Intent cameraIntent=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, 100);
-        }
+        Dialog dialog = new Dialog(AllEmployeesPage.this);
+        dialog.setContentView(R.layout.cam_or_file);
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+        TextView cam = dialog.findViewById(R.id.cam);
+        TextView gal = dialog.findViewById(R.id.gal);
+
+        cam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                Intent cameraIntent=new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, 100);
+            }
+        });
+
+        gal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                Intent i = new Intent(
+                        Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(i, 101);
+            }
+        });
     }
 
     private void checkStorage() {
@@ -369,8 +434,8 @@ public class AllEmployeesPage extends AppCompatActivity {
 
                 ImageView img = ll.findViewById(R.id.profilepic);
 
-                try {
-                    File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                    File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+ File.separator + "Emp_Images");
                     if (directory.exists()) {
                         for (File fl : directory.listFiles()) {
                             if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
@@ -379,8 +444,20 @@ public class AllEmployeesPage extends AppCompatActivity {
                             }
                         }
                     }
-                } catch (Exception e) {
-                    img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                }else {
+                    try {
+                        File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                        if (directory.exists()) {
+                            for (File fl : directory.listFiles()) {
+                                if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                                    Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                                    img.setImageBitmap(bmp);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        img.setImageDrawable(getResources().getDrawable(R.drawable.user));
+                    }
                 }
 
                 TextView name = ll.findViewById(R.id.empname);
@@ -395,64 +472,156 @@ public class AllEmployeesPage extends AppCompatActivity {
                 pres.setVisibility(View.GONE);
                 absent.setVisibility(View.GONE);
 
-//                ll.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        EmpPop(ds, "edit");
-//                    }
-//                });
-//            }
+                ll.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        EmpPop(ds);
+                    }
+                });
+            }
         }
 
         khud.dismiss();
     }
 
-//    private void EmpPop(DataSnapshot emp, String type) {
-//        Dialog dialog = new Dialog(AllEmployeesPage.this);
-//        dialog.setContentView(R.layout.addemp_pop);
-//        dialog.show();
-//
-//        Window window = dialog.getWindow();
-//        window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-//        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-//
-//        TextView label = dialog.findViewById(R.id.toplabel);
-//        EditText empname = dialog.findViewById(R.id.empname);
-//        EditText empcode = dialog.findViewById(R.id.empcode);
-//
-//        ImageView close = dialog.findViewById(R.id.close);
-//        close.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                dialog.dismiss();
-//            }
-//        });
-//
-//        TextView savebtn = dialog.findViewById(R.id.save);
-//
-//        empname.setText(emp.child("name").getValue().toString());
-//        empcode.setText(emp.getKey().toString());
-//
-//        if (type.equals("edit")) {
-//            label.setText("Edit Employee");
-//        }
-//
-//        savebtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                khud.show();
-//                String nm = empname.getText().toString().trim();
-//                String cd = empcode.getText().toString().trim();
-//
-//                dbremp.child(cd).setValue(nm).addOnSuccessListener(new OnSuccessListener<Void>() {
-//                    @Override
-//                    public void onSuccess(Void aVoid) {
-//                        khud.dismiss();
-//                        dialog.dismiss();
-//                        Toast.makeText(AllEmployeesPage.this, "Saved", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//            }
-//        });
+    private void EmpPop(DataSnapshot ds) {
+        Dialog dialog = new Dialog(AllEmployeesPage.this);
+        dialog.setContentView(R.layout.addemp_pop);
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+        storageReference = FirebaseStorage.getInstance().getReference();
+        editimage = dialog.findViewById(R.id.addimage);
+        EditText empname = dialog.findViewById(R.id.empname);
+        EditText empcode = dialog.findViewById(R.id.empcode);
+        ImageView close = dialog.findViewById(R.id.close);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        empname.setText(ds.getValue().toString());
+        empcode.setText(ds.getKey().toString());
+
+        TextView savebtn = dialog.findViewById(R.id.save);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+            try {
+                File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+ File.separator + "Emp_Images");
+                if (directory.exists()) {
+                    for (File fl : directory.listFiles()) {
+                        if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                            Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                            editimage.setImageBitmap(bmp);
+                        }
+                    }
+                }
+            }
+            catch (Exception e){
+                editimage.setImageDrawable(getResources().getDrawable(R.drawable.user));
+            }
+        }else {
+            try {
+                File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images");
+                if (directory.exists()) {
+                    for (File fl : directory.listFiles()) {
+                        if (fl.getAbsolutePath().contains(ds.getKey().toString())) {
+                            Bitmap bmp = BitmapFactory.decodeFile(fl.getAbsolutePath());
+                            editimage.setImageBitmap(bmp);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                editimage.setImageDrawable(getResources().getDrawable(R.drawable.user));
+            }
+        }
+
+        editimage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                type = "edit";
+                checkcamera();
+            }
+        });
+
+        savebtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                khud.show();
+                String nm = empname.getText().toString().trim();
+                String cd = empcode.getText().toString().trim();
+
+                nm = nm.replace(" ", "_");
+                cd = cd.replace(" ","_");
+
+                if (!Python.isStarted()) {
+                    Python.start(new AndroidPlatform(AllEmployeesPage.this));
+
+                    py = Python.getInstance();
+
+                    pyObject = py.getModule("myscript");
+                }
+
+                float aspectRatio1 = myphotoedit.getWidth() /
+                        (float) myphotoedit.getHeight();
+                int width1 = 250;
+                int height1 = Math.round(width1 / aspectRatio1);
+
+                File directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Emp_Images", nm+"!!"+cd+".jpg");
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(directory);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                Bitmap.createScaledBitmap(myphotoedit, width1, height1, false).compress(Bitmap.CompressFormat.JPEG, 100, fos);
+
+                File filename = new File("/data/user/0/com.aditya.attendance_app/files/chaquopy/AssetFinder/app/test.jpg");
+
+                try (FileOutputStream out = new FileOutputStream(filename)) {
+                    float aspectRatio = myphotoedit.getWidth() /
+                            (float) myphotoedit.getHeight();
+                    int width = 250;
+                    int height = Math.round(width / aspectRatio);
+
+                    Bitmap.createScaledBitmap(myphotoedit, width, height, false).compress(Bitmap.CompressFormat.JPEG, 100, out);
+
+
+                    PyObject pobj = pyObject.callAttr("convert", "/data/user/0/com.aditya.attendance_app/files/chaquopy/AssetFinder/app/test.jpg");
+
+                    if(pobj.toString().equals("done")){
+                        File filepkl = new File("/data/user/0/com.aditya.attendance_app/files/chaquopy/AssetFinder/app/toupload.pkl");
+                        String finalCd = cd;
+                        String finalNm = nm;
+                        storageReference.child("workers_pkl").child(nm+"!!"+cd+".pkl").putFile(Uri.fromFile(filepkl)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                dbremp.child(finalCd).setValue(finalNm).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        storageReference.child("worker_images").child(finalNm+"!!"+finalCd+".jpg").putFile(Uri.fromFile(filename)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                            @Override
+                                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                                khud.dismiss();
+                                                dialog.dismiss();
+                                                Toast.makeText(AllEmployeesPage.this, "Done", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+                catch (Exception e){
+
+                }
+            }
+        });
     }
 }

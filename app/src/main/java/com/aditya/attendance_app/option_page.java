@@ -196,6 +196,7 @@ public class option_page extends AppCompatActivity implements LocationListener{
             Permissions.check(this, permissions, null, null, new PermissionHandler() {
                 @Override
                 public void onGranted() {
+                    checkIfGPSEnabled();
                     Toast.makeText(option_page.this, "Permissions granted", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -369,6 +370,7 @@ public class option_page extends AppCompatActivity implements LocationListener{
                 public void onClick(View v) {
                     khud.show();
                     File filename = new File("/data/user/0/com.aditya.attendance_app/files/chaquopy/AssetFinder/app/test.jpg");
+
                     try (FileOutputStream out = new FileOutputStream(filename)) {
                         float aspectRatio = photo.getWidth() /
                                 (float) photo.getHeight();
@@ -442,7 +444,7 @@ public class option_page extends AppCompatActivity implements LocationListener{
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         String provide = locationManager.getBestProvider(criteria, true);
         locationManager.requestLocationUpdates(provide, 5 * 1000, 10, (LocationListener) this);
-        setgpslocation();
+        //setgpslocation();
     }
 
     private void setgpslocation() {

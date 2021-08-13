@@ -1,6 +1,7 @@
 import face_recognition, os
 from os.path import dirname, join
 import pickle
+import dill
 import numpy as np
 
 def get_base_dir():
@@ -15,7 +16,7 @@ def get_base_dir():
 def savefile(pobj):
     di = dirname(__file__)
     with open(join(di, "mypy.pkl"), "wb") as f:
-        pickle.dump(pobj, f)
+        dill.dump(pobj, f)
 
     return "done"
 

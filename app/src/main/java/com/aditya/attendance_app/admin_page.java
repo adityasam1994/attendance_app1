@@ -8,6 +8,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
@@ -61,7 +62,7 @@ public class admin_page extends AppCompatActivity {
 
         getSupportActionBar().hide();
 
-        khud=KProgressHUD.create(admin_page.this)
+        khud = KProgressHUD.create(admin_page.this)
                 .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
                 .setCancellable(true)
                 .setAnimationSpeed(2)
@@ -74,7 +75,7 @@ public class admin_page extends AppCompatActivity {
         logout = (ImageView) findViewById(R.id.logoutadmin);
         getatt = (TextView) findViewById(R.id.getatt);
         manageemp = (TextView) findViewById(R.id.manageemp);
-        viewatt = (TextView)findViewById(R.id.viewatt);
+        viewatt = (TextView) findViewById(R.id.viewatt);
 
         viewatt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +111,7 @@ public class admin_page extends AppCompatActivity {
         });
     }
 
-    private void checkpermissions(){
+    private void checkpermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
@@ -121,7 +122,7 @@ public class admin_page extends AppCompatActivity {
                     Toast.makeText(admin_page.this, "Permissions granted", Toast.LENGTH_SHORT).show();
                 }
             });
-        }else {
+        } else {
             allper = true;
         }
     }
@@ -191,7 +192,7 @@ public class admin_page extends AppCompatActivity {
 
     private void createfileExcel(String year, String month) {
         String fname = "Attendance_" + year + month;
-        File directory = new File(Environment.getExternalStorageDirectory() + File.separator , fname + ".xls");
+        File directory = new File(Environment.getExternalStorageDirectory() + File.separator, fname + ".xls");
         File filePath = new File(getExternalFilesDir(null) + "/" + fname + ".xls");
 
         String[] months = new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -262,7 +263,12 @@ public class admin_page extends AppCompatActivity {
         }
 
         try {
-            OutputStream ops = new FileOutputStream(Environment.getExternalStorageDirectory() + File.separator + "/" +fname + ".xls");
+            OutputStream ops = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                ops = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + File.separator + fname + ".xls"));
+            } else {
+                ops = new FileOutputStream(Environment.getExternalStorageDirectory() + File.separator + fname + ".xls");
+            }
             hssfWorkbook.write(ops);
             khud.dismiss();
             Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();

@@ -30,6 +30,8 @@ android {
                 install "Pillow"
 
                 install "numpy"
+
+                install "dill"
             }
 
             pyc {

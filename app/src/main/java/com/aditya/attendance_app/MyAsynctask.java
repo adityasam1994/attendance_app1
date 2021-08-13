@@ -12,7 +12,12 @@ import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,8 +31,6 @@ import java.sql.Struct;
 
 public class MyAsynctask extends AsyncTask<String, String, String> {
     Context context;
-    String result;
-    ProgressDialog progressDialog;
     Python py;
     static PyObject pyObject1;
 
@@ -49,6 +52,10 @@ public class MyAsynctask extends AsyncTask<String, String, String> {
             py = Python.getInstance();
 
             pyObject1 = py.getModule("myscript");
+
+            //PyObject obj = PyObject.fromJava(pyObject1);
+            //PyObject pyObject2 = py.getModule("myscript");
+            //pyObject2.callAttr("savefile", obj);
 
         }
         return null;
